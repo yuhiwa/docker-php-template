@@ -1,0 +1,64 @@
+FROM amazonlinux:2
+
+MAINTAINER yuhiwa
+
+# timezone
+RUN unlink /etc/localtime
+RUN ln -s /usr/share/zoneinfo/Japan /etc/localtime
+
+RUN yum -y update && yum clean all
+RUN amazon-linux-extras enable php7.3 nginx1
+RUN yum install -y \
+  sudo git zip unzip gcc yum-utils \
+  postgresql \
+  openssl \
+  openssl-devel \
+  php \
+  php-fpm \
+  php-devel \
+  php-gd \
+  php-mbstring \
+  php-mysqlnd \
+  php-pdo \
+  php-pecl-mcrypt \
+  php-xml \
+  php-json \
+  php-gd \
+  php-process \
+  php-common \
+  php-pear \
+  php-pgsql \
+  php-bcmath \
+  php-pecl-zip \
+  nginx ;\
+  pecl install xdebug
+
+RUN yum install -y https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+
+# font install
+RUN cd /tmp ;\
+  curl -L https://moji.or.jp/wp-content/ipafont/IPAexfont/ipaexg00201.zip > IPAexfont00201.zip ;\
+  unzip IPAexfont00201.zip ;\
+  mv ipaexg00201 /usr/share/fonts/ && rm IPAexfont00201.zip
+
+# user setting
+RUN groupadd -g 503 test ;\
+  useradd -g 503 -u 503 test ;\
+  echo 'test:test' | chpasswd ;\
+  echo "test    ALL=(ALL)     ALL" >> /etc/sudoers
+
+# install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# set up
+COPY nginx-fpm-foreground /usr/local/bin/
+RUN chmod 755 /usr/local/bin/nginx-fpm-foreground
+
+# for xdebug
+COPY xdebug.ini /etc/php.d/
+RUN echo "zend_extension=/usr/lib64/php/modules/xdebug.so" >> /etc/php.d/xdebug.ini
+
+# for aspect-mock cache file
+RUN mkdir -pv /tmp/cache/AspectMock && chmod 777 -R /tmp/cache/AspectMock
+
+CMD ["/usr/local/bin/nginx-fpm-foreground"]

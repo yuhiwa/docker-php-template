@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+/usr/sbin/php-fpm &
+/usr/sbin/nginx -c /etc/nginx/nginx.conf -g "daemon off;" 

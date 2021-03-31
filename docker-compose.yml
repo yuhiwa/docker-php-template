@@ -1,0 +1,71 @@
+version: '3'
+
+services:
+  proxy-fpm:
+    container_name: "proxy-fpm"
+    hostname: "proxy-fpm"
+    build:
+      context: .
+      dockerfile: Dockerfile_proxy
+    ports:
+      - 8081:80
+    volumes:
+      - ~/test-www:/var/www:delegated
+      - ./proxy-nginx:/etc/nginx
+  nginx:
+    container_name: "frontend-nginx"
+    hostname: "frontend-nginx"
+    build:
+      context: frontend-nginx/.
+    ports:
+      - 8083:80
+    volumes:
+      - ~/test-www:/var/www:delegated
+  php-fpm:
+    container_name: "frontend-php"
+    hostname: "frontend-php-fpm"
+    build:
+      context: frontend-php/.
+    volumes:
+      - ~/test-www:/var/www:delegated
+  web_back:
+    container_name: "backend"
+    hostname: "backend"
+    build:
+      context: .
+      dockerfile: Dockerfile_back
+    ports:
+      - 8082:80
+    volumes:
+      - ./back-nginx.conf:/etc/nginx/conf.d/back-nginx.conf
+      - ./back-www.conf:/etc/php-fpm.d/www.conf
+      - ~/test-www:/var/www:delegated
+  db:
+    container_name: "testdb"
+    hostname: "testdb"
+    build:
+      context: .
+      dockerfile: Dockerfile_db
+    volumes:
+      - mysql-db:/var/lib/mysql
+      - ./docker.cnf:/etc/mysql/conf.d/docker.cnf
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      TZ: Asia/Tokyo
+    ports:
+      - '13306:3306'
+  redis:
+    container_name: "redis"
+    hostname: "redis"
+    image: redis:5.0.5-alpine
+    volumes:
+      - redis-data:/data
+    ports:
+      - '6379:6379'
+
+volumes:
+  mysql-db:
+    driver: local
+  redis-data:
+    driver: local
+

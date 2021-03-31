@@ -1,0 +1,6 @@
+FROM mysql:5.7.26
+
+MAINTAINER yuhiwa
+
+RUN apt-get update && apt-get install -y --no-install-recommends mysql-workbench && rm -rf /var/lib/apt/lists/*
+

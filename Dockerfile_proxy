@@ -1,0 +1,29 @@
+FROM amazonlinux:2
+
+MAINTAINER yuhiwa
+
+RUN yum -y update && yum clean all
+RUN yum install -y \
+  sudo git zip unzip yum-utils 
+
+RUN curl -O https://openresty.org/package/amazon/openresty.repo && mv openresty.repo /etc/yum.repos.d/ &&\
+  yum check-update && yum -y install openresty
+
+# user setting
+RUN groupadd -g 503 test ;\
+  useradd -g 503 -u 503 test ;\
+  echo 'test:test' | chpasswd ;\
+  echo "test    ALL=(ALL)     ALL" >> /etc/sudoers
+
+# nginx directory , log and cache
+RUN mkdir /var/log/nginx; chown test:test /var/log/nginx; \
+  mkdir /var/cache/nginx; chown test:test /var/cache/nginx 
+
+# timezone
+RUN cp /usr/share/zoneinfo/Japan /etc/localtime
+
+# set up
+COPY nginx-foreground /usr/local/bin/
+RUN chmod 755 /usr/local/bin/nginx-foreground
+#
+CMD ["/usr/local/bin/nginx-foreground"]
